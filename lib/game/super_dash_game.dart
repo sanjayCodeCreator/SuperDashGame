@@ -245,7 +245,7 @@ class SuperDashGame extends LeapGame
 
     if (buildContext != null) {
       final score = gameBloc.state.score;
-      Navigator.of(buildContext!).push(
+      Navigator.of(buildContext!).pushReplacement(
         ScorePage.route(score: score),
       );
     }

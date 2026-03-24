@@ -44,8 +44,8 @@ class GameElevatedButton extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFFADD7CD),
-                Color(0xFF57AEA5),
+                Color(0xFF86B2CA),
+                Color(0xFF2EA9D1),
               ],
             ),
         border: Border.all(color: Colors.white24),

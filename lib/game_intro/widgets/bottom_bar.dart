@@ -19,32 +19,43 @@ class BottomBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const AudioButton(),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
+            Expanded(
+              child: Center(
+                child: Text(
                   l10n.superDash,
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),
-                RichText(
-                  text: TextSpan(
-                    text: l10n.howItsMade,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w400,
-                      decoration: TextDecoration.underline,
-                    ),
-                    recognizer: TapGestureRecognizer()
-                      ..onTap = () => launchUrlString(Urls.howWeBuilt),
-                  ),
-                ),
-              ],
+              ),
             ),
-            const InfoButton(),
+            // Column(
+            //   mainAxisSize: MainAxisSize.min,
+            //   children: [
+            //     Text(
+            //       l10n.superDash,
+            //       style: theme.textTheme.titleMedium?.copyWith(
+            //         color: Colors.white,
+            //         fontWeight: FontWeight.bold,
+            //       ),
+            //     ),
+            //     const SizedBox(height: 4),
+            //     // RichText(
+            //     //   text: TextSpan(
+            //     //     text: l10n.howItsMade,
+            //     //     style: theme.textTheme.titleMedium?.copyWith(
+            //     //       color: Colors.white,
+            //     //       fontWeight: FontWeight.w400,
+            //     //       decoration: TextDecoration.underline,
+            //     //     ),
+            //     //     recognizer: TapGestureRecognizer()
+            //     //       ..onTap = () => launchUrlString(Urls.howWeBuilt),
+            //     //   ),
+            //     // ),
+            //   ],
+            // ),
+            // const InfoButton(),
           ],
         ),
       ),

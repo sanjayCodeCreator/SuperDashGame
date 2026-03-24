@@ -69,17 +69,17 @@ class _IntroPage extends StatelessWidget {
               width: context.isSmall ? 282 : 380,
             ),
             const Spacer(flex: 4),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Text(
-                l10n.gameIntroPageHeadline,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 32),
+            //   child: Text(
+            //     l10n.gameIntroPageHeadline,
+            //     textAlign: TextAlign.center,
+            //     style: theme.textTheme.titleMedium?.copyWith(
+            //       color: Colors.black,
+            //       fontWeight: FontWeight.bold,
+            //     ),
+            //   ),
+            // ),
             const SizedBox(height: 32),
             GameElevatedButton(
               label: l10n.gameIntroPagePlayButtonText,
@@ -91,7 +91,7 @@ class _IntroPage extends StatelessWidget {
               children: [
                 AudioButton(),
                 LeaderboardButton(),
-                InfoButton(),
+                // InfoButton(),
                 HowToPlayButton(),
               ],
             ),

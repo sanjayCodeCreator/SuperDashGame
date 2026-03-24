@@ -1,4 +1,4 @@
-package com.example.super_dash
+package com.superduckk.superduckk
 
 import io.flutter.embedding.android.FlutterActivity
 

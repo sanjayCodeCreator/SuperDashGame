@@ -58,6 +58,7 @@ class App extends StatelessWidget {
           ),
         ],
         child: MaterialApp(
+          debugShowCheckedModeBanner: false, // ✅ remove DEBUG banner
           theme: ThemeData(
             textTheme: AppTextStyles.textTheme,
           ),
