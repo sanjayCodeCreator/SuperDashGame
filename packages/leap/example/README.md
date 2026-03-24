@@ -1,1 +1,1 @@
-See [examples/standard_platformer](../../../../../Downloads/leap-main%202/examples/standard_platformer).
+See [examples/standard_platformer](../../../examples/standard_platformer).

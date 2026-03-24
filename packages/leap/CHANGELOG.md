@@ -1,3 +1,117 @@
+## 0.8.5
+
+ - **FEAT**: upgrade to flame 1.28 ([#81](https://github.com/kurtome/leap/issues/81)). ([8c2c1f68](https://github.com/kurtome/leap/commit/8c2c1f684c5711f415d796c5c9a37e6e7bdf3e16))
+
+## 0.8.4
+
+ - **FEAT**: adding support for "Tags" property on tiles ([#78](https://github.com/kurtome/leap/issues/78)). ([482eea53](https://github.com/kurtome/leap/commit/482eea535e9bb5aa4dfc6f14d3837d5dfdebae20))
+
+## 0.8.3
+
+ - **FIX**: slope collision detection is inconsistent ([#73](https://github.com/kurtome/leap/issues/73)). ([ced80749](https://github.com/kurtome/leap/commit/ced8074922b30e19409ee4840391fa135d8f0514))
+ - **FIX**: walk speed mixin should be on entity ([#72](https://github.com/kurtome/leap/issues/72)). ([4bdf6188](https://github.com/kurtome/leap/commit/4bdf61887c0bc13100429c8087333301834d346c))
+ - **FIX**: direction enums should be shared accross domains ([#71](https://github.com/kurtome/leap/issues/71)). ([2de6bb98](https://github.com/kurtome/leap/commit/2de6bb982a3a086f62b0dc6c869fc7bcdf254a47))
+ - **FIX**: entities could phase through collisions ([#70](https://github.com/kurtome/leap/issues/70)). ([64b25bff](https://github.com/kurtome/leap/commit/64b25bfff6e9c4de5ecde87bc48b7f2e63ee0d61))
+ - **FIX**: AnchoredAnimationGroup positioning breaks when children change s… ([#68](https://github.com/kurtome/leap/issues/68)). ([514d3138](https://github.com/kurtome/leap/commit/514d3138626b50ffead88b72d7dc563dce79f82c))
+ - **FEAT**: adding ignoreTags property to PhysicalEntity ([#77](https://github.com/kurtome/leap/issues/77)). ([0d98a004](https://github.com/kurtome/leap/commit/0d98a00401744895ac1d9f6ad665969350679053))
+ - **FEAT**: remove static property from entities ([#76](https://github.com/kurtome/leap/issues/76)). ([3df41be8](https://github.com/kurtome/leap/commit/3df41be89ffad20df5e11ae085fc05fc094e443e))
+ - **FEAT**: adding extensions methods for direction enums ([#75](https://github.com/kurtome/leap/issues/75)). ([ebfa2775](https://github.com/kurtome/leap/commit/ebfa27754e18d9b118423290c14cfb33c79f00fc))
+ - **FEAT**: removing faceLeft in favor of direction enums ([#74](https://github.com/kurtome/leap/issues/74)). ([cce48df4](https://github.com/kurtome/leap/commit/cce48df4d51aa8e9177f02cec5be0ea54af0839b))
+ - **FEAT**: adding behavior support to AnchoredAnimationGroup ([#69](https://github.com/kurtome/leap/issues/69)). ([35345853](https://github.com/kurtome/leap/commit/35345853a34050e9b39f16beff03606069071449))
+
+## 0.8.2
+
+ - **FEAT**: entities can override the global max gravity Y velocity ([#67](https://github.com/kurtome/leap/issues/67)). ([418b9df3](https://github.com/kurtome/leap/commit/418b9df3629fc451f4731fad440e4efae25db369))
+ - **FEAT**: adding spriteOffset to AnchoredAnimationGroup ([#66](https://github.com/kurtome/leap/issues/66)). ([e9770d80](https://github.com/kurtome/leap/commit/e9770d8016ae37873048a09668f69f8d24a7c8dd))
+
+## 0.8.1+1
+
+ - **REFACTOR**: update dependencies ([#65](https://github.com/kurtome/leap/issues/65)). ([ff42a6d4](https://github.com/kurtome/leap/commit/ff42a6d434dfe4161229a1dfa1b222c9d55ef70a))
+
+## 0.8.1
+
+ - **FIX**: non-solid collisions no not account for velocity properly ([#64](https://github.com/kurtome/leap/issues/64)). ([c33024e5](https://github.com/kurtome/leap/commit/c33024e5ca2638710d632ea859712f7090a88c22))
+ - **FEAT**: adding IgnoresCollisionTags status ([#63](https://github.com/kurtome/leap/issues/63)). ([de882d63](https://github.com/kurtome/leap/commit/de882d63d5fc95f7639ea94f5abcd5123f1ce954))
+ - **FEAT**: improving StatusComponent including rename to EntityStatus ([#62](https://github.com/kurtome/leap/issues/62)). ([4a53ceaa](https://github.com/kurtome/leap/commit/4a53ceaa774b4c098e2dbe8ac6ed89f8488ae548))
+
+## 0.8.0+1
+
+ - **FIX**: fixing prevPosition updating ([#55](https://github.com/kurtome/leap/issues/55)). ([64170f29](https://github.com/kurtome/leap/commit/64170f29324b92304dbc5208d5f55b048c39f8dc))
+ - **DOCS**(readme): update player implementation ([#56](https://github.com/kurtome/leap/issues/56)). ([869fbd7c](https://github.com/kurtome/leap/commit/869fbd7c3c3ecd5c3ae6e959c1eac7cf7d09978a))
+
+## 0.8.0
+
+> Note: This release has breaking changes.
+
+ - **FIX**: world loading order bug ([#53](https://github.com/kurtome/leap/issues/53)). ([2711d39d](https://github.com/kurtome/leap/commit/2711d39d0a071de72449a89923cdda8ec3676656))
+ - **FEAT**: adding more options to has_animation_group ([#54](https://github.com/kurtome/leap/issues/54)). ([6be5eba4](https://github.com/kurtome/leap/commit/6be5eba4e76a7d1f1f58aacbb2b27d2c69e4c0a6))
+ - **FEAT**: adding constructor params to PhysicalBehavior ([#51](https://github.com/kurtome/leap/issues/51)). ([87157005](https://github.com/kurtome/leap/commit/87157005003123a9aaead5b87fbeb4fc082f8bfc))
+ - **BREAKING** **FEAT**: Refactor everything to use behaviors, and simplify base classes ([#52](https://github.com/kurtome/leap/issues/52)). ([b5eef12d](https://github.com/kurtome/leap/commit/b5eef12d17c9a483ee955707af3f8d710a0f694f))
+
+## 0.7.0
+
+> Note: This release has breaking changes.
+
+ - **FIX**: wasAlive now happens after children update ([#49](https://github.com/kurtome/leap/issues/49)). ([85180b11](https://github.com/kurtome/leap/commit/85180b117b25e6a6844e3e0e1bfefb62d69df12c))
+ - **FEAT**: adding prevPosition to physical entity ([#48](https://github.com/kurtome/leap/issues/48)). ([14077a41](https://github.com/kurtome/leap/commit/14077a4105d89ccefc57df243a0a4444d3dce806))
+ - **BREAKING** **FIX**: moving some entity logic to updateAfter ([#50](https://github.com/kurtome/leap/issues/50)). ([bd3aa33c](https://github.com/kurtome/leap/commit/bd3aa33cad022d8edce951abb994da82351fd58c))
+
+## 0.6.2
+
+ - **FEAT**: LeapWorld clean-up and other fixes ([#47](https://github.com/kurtome/leap/issues/47)). ([a1a9979f](https://github.com/kurtome/leap/commit/a1a9979fc1026fdf1a724e8eb9f0331ac6c0ce88))
+
+## 0.6.1
+
+ - **FEAT**: adding support for pitched tiles (sloped ceilings) ([#46](https://github.com/kurtome/leap/issues/46)). ([12e90080](https://github.com/kurtome/leap/commit/12e90080af865af5e416c6c6afa52e7644beae80))
+
+## 0.6.0
+
+> Note: This release has breaking changes.
+
+ - **BREAKING** **FIX**: pubspec flutter version must a minimum ([#45](https://github.com/kurtome/leap/issues/45)). ([a5cc357d](https://github.com/kurtome/leap/commit/a5cc357d9c2a6aa9b583e22c66c731bef88ffa61))
+
+## 0.5.4
+
+ - **FEAT**: upgrading flame to 1.18 ([#44](https://github.com/kurtome/leap/issues/44)). ([dd0b81ab](https://github.com/kurtome/leap/commit/dd0b81ab7249d73153810fd20ecc0828ff6434aa))
+
+## 0.5.3
+
+ - misc bug fixes
+
+## 0.5.2+1
+
+ - **FIX**: misc clean-up ([#40](https://github.com/kurtome/leap/issues/40)). ([800529ac](https://github.com/kurtome/leap/commit/800529acee9ad8798a68337c95f6536635fca94b))
+
+## 0.5.2
+
+ - Bump "leap" to `0.5.2`.
+
+## 0.5.1
+
+ - **FEAT**: Adding atlas packing spacing option to TiledOptions ([#31](https://github.com/kurtome/leap/issues/31)). ([8bc04b2c](https://github.com/kurtome/leap/commit/8bc04b2cac209ea5d9d2fad78d411a8f653fa2cb))
+
+## 0.5.0
+
+> Note: This release has breaking changes.
+
+ - **FEAT**: adding character base class ([#35](https://github.com/kurtome/leap/issues/35)). ([802a735a](https://github.com/kurtome/leap/commit/802a735af6d4e274640c8fd9e3ccc695b5e44bd7))
+ - **BREAKING** **FEAT**: refactoring collision info (again) and adding character animations ([#36](https://github.com/kurtome/leap/issues/36)). ([0fbefd66](https://github.com/kurtome/leap/commit/0fbefd660916a8ed8ba3e5a9d4a85784383a4a2c))
+
+## 0.4.0
+
+> Note: This release has breaking changes.
+
+ - **FEAT**: allow useAtlas and layerPaintFactory to be configured through TiledOptions ([#27](https://github.com/kurtome/leap/issues/27)). ([02f2be0c](https://github.com/kurtome/leap/commit/02f2be0c9d47cf2ce51ee2109fbe21a42dcd7457))
+ - **BREAKING** **FEAT**: ground tiles clean-up and custom handling ([#34](https://github.com/kurtome/leap/issues/34)). ([225b830a](https://github.com/kurtome/leap/commit/225b830a554988bc55ad3f3dcd10fa44139fc0b0))
+ - **BREAKING** **FEAT**: Refactoring collision detection for simplified API and improved performance ([#32](https://github.com/kurtome/leap/issues/32)). ([4b767231](https://github.com/kurtome/leap/commit/4b767231e6ce0df68b52757adca08e7519ef01c2))
+ - **BREAKING** **FEAT**: StatusComponent system, ladders, and more inputs ([#28](https://github.com/kurtome/leap/issues/28)). ([eafe653f](https://github.com/kurtome/leap/commit/eafe653f60ad123241b810717caff4fdef8ef363))
+
+## 0.3.1
+
+ - **FIX**: walking down slopes not working properly ([#24](https://github.com/kurtome/leap/issues/24)). ([b88b13be](https://github.com/kurtome/leap/commit/b88b13be2d36a07955014e897236b30ebd37f6d9))
+ - **FEAT**: adding ability to change map in runtime ([#23](https://github.com/kurtome/leap/issues/23)). ([05c615e0](https://github.com/kurtome/leap/commit/05c615e08943de8ed41c7e6949dc70ddecef4e56))
+ - **FEAT**: adding tsx packing filter to TiledOptions ([#26](https://github.com/kurtome/leap/issues/26)). ([3accb89f](https://github.com/kurtome/leap/commit/3accb89f098cf0432211550e2ee80ce967958ffd))
+
 ## 0.3.0
 
 > Note: This release has breaking changes.

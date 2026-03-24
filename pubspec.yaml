@@ -20,7 +20,7 @@ dependencies:
   firebase_analytics: ^10.8.7
   firebase_auth: ^4.17.6
   firebase_core: ^2.25.5
-  flame: ^1.10.0
+  flame: ^1.28.1
   flame_behaviors: ^1.0.0
   flame_tiled: ^1.15.0
   flow_builder: ^0.0.9
@@ -37,7 +37,7 @@ dependencies:
   leap:
     path: packages/leap
   logging: ^1.2.0
-  ordered_set: ^5.0.2
+  ordered_set: ^8.0.0
   path: ^1.8.3
   pathxp: ^0.4.0
   provider: ^6.0.5

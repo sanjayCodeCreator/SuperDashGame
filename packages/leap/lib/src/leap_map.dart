@@ -1,17 +1,18 @@
 import 'package:flame/cache.dart';
 import 'package:flame/components.dart';
 import 'package:flame_tiled/flame_tiled.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:leap/leap.dart';
 
 /// This component encapsulates the Tiled map, and in particular builds the
 /// grid of ground tiles that make up the terrain of the game.
-class LeapMap extends PositionComponent with HasGameRef<LeapGame> {
+class LeapMap extends PositionComponent with HasGameReference<LeapGame> {
   LeapMap({
     required this.tileSize,
     required this.tiledMap,
     this.tiledOptions = const TiledOptions(),
     this.tiledObjectHandlers = const {},
+    this.groundTileHandlers = const {},
   }) {
     groundLayer = getTileLayer<TileLayer>(
       tiledOptions.groundLayerName,
@@ -43,21 +44,23 @@ class LeapMap extends PositionComponent with HasGameRef<LeapGame> {
   /// editor.
   late Map<String, TiledObjectHandler> tiledObjectHandlers;
 
+  /// Handlers for building components or custom logic ground tiles,
+  /// keyed by Tiled "Class" which is settable in the Tiled editor.
+  late Map<String, GroundTileHandler> groundTileHandlers;
+
   @override
+  @mustCallSuper
   void onMount() {
+    super.onMount();
+
     groundTiles = LeapMapGroundTile.generate(
-      tiledMap.tileMap.map,
+      this,
       groundLayer,
+      game,
+      groundTileHandlers,
       tiledOptions: tiledOptions,
     );
     add(tiledMap);
-    for (final column in groundTiles) {
-      for (final groundTile in column) {
-        if (groundTile != null) {
-          add(groundTile);
-        }
-      }
-    }
 
     /// Object layers
     final objectLayers = tiledMap.tileMap.map.layers
@@ -66,13 +69,12 @@ class LeapMap extends PositionComponent with HasGameRef<LeapGame> {
         .cast<ObjectGroup>();
     for (final layer in objectLayers) {
       for (final obj in layer.objects) {
-        final factory = tiledObjectHandlers[obj.class_];
-        if (factory != null) {
-          factory.handleObject(obj, layer, this);
+        final handler = tiledObjectHandlers[obj.class_];
+        if (handler != null) {
+          handler.handleObject(obj, layer, this);
         }
       }
     }
-    return super.onMount();
   }
 
   /// Convenience method for accessing Tiled layers in the [tiledMap].
@@ -114,6 +116,7 @@ class LeapMap extends PositionComponent with HasGameRef<LeapGame> {
     Images? images,
     TiledOptions tiledOptions = const TiledOptions(),
     Map<String, TiledObjectHandler> tiledObjectHandlers = const {},
+    Map<String, GroundTileHandler> groundTileHandlers = const {},
   }) async {
     final tiledMap = await TiledComponent.load(
       tiledMapPath,
@@ -123,12 +126,18 @@ class LeapMap extends PositionComponent with HasGameRef<LeapGame> {
       images: images,
       atlasMaxX: tiledOptions.atlasMaxX,
       atlasMaxY: tiledOptions.atlasMaxY,
+      tsxPackingFilter: tiledOptions.tsxPackingFilter,
+      useAtlas: tiledOptions.useAtlas,
+      layerPaintFactory: tiledOptions.layerPaintFactory,
+      atlasPackingSpacingX: tiledOptions.atlasPackingSpacingX,
+      atlasPackingSpacingY: tiledOptions.atlasPackingSpacingY,
     );
     return LeapMap(
       tileSize: tileSize,
       tiledMap: tiledMap,
       tiledOptions: tiledOptions,
       tiledObjectHandlers: tiledObjectHandlers,
+      groundTileHandlers: groundTileHandlers,
     );
   }
 }
@@ -139,8 +148,12 @@ class LeapMap extends PositionComponent with HasGameRef<LeapGame> {
 /// For the purposes of collision detection, the hitbox is assumed to be the
 /// entire tile (except when [isSlope] is `true`).
 class LeapMapGroundTile extends PhysicalEntity {
-  final TiledOptions tiledOptions;
+  LeapGame gameOverride;
 
+  @override
+  LeapGame get leapGame => gameOverride;
+
+  final TiledOptions tiledOptions;
   final Tile tile;
 
   /// Coordinates on the tile grid.
@@ -154,13 +167,13 @@ class LeapMapGroundTile extends PhysicalEntity {
 
   /// Topmost point on the left side, important for slopes.
   @override
-  int? get leftTop => _leftTop;
-  int? _leftTop;
+  int? get leftTopOffset => _leftTopOffset;
+  int? _leftTopOffset;
 
   /// Topmost point on the right side, important for slopes.
   @override
-  int? get rightTop => _rightTop;
-  int? _rightTop;
+  int? get rightTopOffset => _rightTopOffset;
+  int? _rightTopOffset;
 
   /// Is this a sloped section of ground? If so, this is handled specially
   /// in collision detection to ensure player (or other characters) can walk
@@ -169,59 +182,96 @@ class LeapMapGroundTile extends PhysicalEntity {
   bool get isSlope => _isSlope;
   late bool _isSlope;
 
-  /// Damage to apply when colliding and this is a hazard
+  /// Is this a pitched (sloped on the bottom) section of ground?
+  /// If so, this is handled specially in collision detection to
+  /// ensure player (or other characters) can walk up and down it properly.
   @override
-  int get hazardDamage {
-    final damage = tile.properties.getValue<int>(
-      tiledOptions.damageProperty,
-    );
-    return damage ?? 0;
-  }
+  bool get isPitch => _isPitch;
+  late bool _isPitch;
+
+  /// Bottommost point on the left side, for pitched ceilings.
+  @override
+  int? get leftBottomOffset => _leftBottomOffset;
+  int? _leftBottomOffset;
+
+  /// Bottommost point on the right side, for pitched ceilings.
+  @override
+  int? get rightBottomOffset => _rightBottomOffset;
+  int? _rightBottomOffset;
 
   LeapMapGroundTile(
     this.tile,
     this._gridX,
-    this._gridY, {
+    this._gridY,
+    this.gameOverride, {
     this.tiledOptions = const TiledOptions(),
-  }) : super(static: true, collisionType: CollisionType.tilemapGround) {
-    _isSlope = tile.type == tiledOptions.slopeType;
-    _rightTop = tile.properties.getValue<int>(
-      tiledOptions.slopeRightTopProperty,
-    );
-    _leftTop = tile.properties.getValue<int>(
-      tiledOptions.slopeLeftTopProperty,
-    );
+  }) {
+    width = leapGame.tileSize;
+    height = leapGame.tileSize;
+    position = Vector2(tileSize * _gridX, tileSize * _gridY);
 
-    // Hazards (like spikes) damage on collision.
-    if (tile.class_ == tiledOptions.hazardClass) {
-      tags.add('hazard');
+    _rightTopOffset = tile.properties.getValue<int>(
+      tiledOptions.rightTopProperty,
+    );
+    _leftTopOffset = tile.properties.getValue<int>(
+      tiledOptions.leftTopProperty,
+    );
+    _isSlope = _rightTopOffset != null && _leftTopOffset != null;
+
+    _rightBottomOffset = tile.properties.getValue<int>(
+      tiledOptions.rightBottomProperty,
+    );
+    _leftBottomOffset = tile.properties.getValue<int>(
+      tiledOptions.leftBottomProperty,
+    );
+    _isPitch = _rightBottomOffset != null && _leftBottomOffset != null;
+
+    tags.add(CommonTags.ground);
+
+    // Always add the tile's Class property as tag to make it easy
+    // to add small bits of behavior to characters during updates
+    // with collisions.
+    if (tile.class_ != null && tile.class_ != '') {
+      tags.add(tile.class_!);
     }
 
-    // Platforms only collide from above so the player can jump through them
-    // and land on top.
-    if (tile.class_ == tiledOptions.platformClass) {
-      tags.add('platform');
+    // Additionally add any strings in the "Tags" property
+    final tagsProperty = tile.properties
+        .getValue<String>(tiledOptions.tagsProperty)
+        ?.split(',')
+        .map((s) => s.trim());
+    if (tagsProperty != null) {
+      tags.addAll(tagsProperty);
     }
+
+    hazardDamage = tile.properties.getValue<int>(
+          tiledOptions.damageProperty,
+        ) ??
+        0;
   }
 
-  @override
-  void onMount() {
-    super.onMount();
-    width = tileSize;
-    height = tileSize;
-    position = Vector2(tileSize * gridX, tileSize * gridY);
-  }
-
-  /// Is this a slop going up from left-to-right.
+  /// Is this a slope going up from left-to-right.
   @override
   bool get isSlopeFromLeft {
-    return isSlope && (leftTop! < rightTop!);
+    return isSlope && (leftTopOffset! < rightTopOffset!);
   }
 
-  /// Is this a slop going up from right-to-left.
+  /// Is this a slope going up from right-to-left.
   @override
   bool get isSlopeFromRight {
-    return isSlope && (leftTop! > rightTop!);
+    return isSlope && (leftTopOffset! > rightTopOffset!);
+  }
+
+  /// Is this a vaulted (sloped on the bottom) going up from left-to-right.
+  @override
+  bool get isPitchFromLeft {
+    return isPitch && (leftBottomOffset! > rightBottomOffset!);
+  }
+
+  /// Is this a vaulted (sloped on the bottom) going up from right-to-left.
+  @override
+  bool get isPitchFromRight {
+    return isPitch && (leftBottomOffset! < rightBottomOffset!);
   }
 
   /// The topmost point on this slope that current is within the
@@ -229,24 +279,49 @@ class LeapMapGroundTile extends PhysicalEntity {
   @override
   double relativeTop(PhysicalEntity other) {
     if (isSlopeFromLeft) {
-      final delta = rightTop! - leftTop!;
+      final delta = rightTopOffset! - leftTopOffset!;
       final fromLeftPx = other.right - left;
       final ratio = (fromLeftPx / tileSize).clamp(0, 1);
-      return (bottom - leftTop!) - (delta * ratio);
+      final result = (bottom - leftTopOffset!) - (delta * ratio);
+      return result;
     } else if (isSlopeFromRight) {
-      final delta = leftTop! - rightTop!;
+      final delta = leftTopOffset! - rightTopOffset!;
       final fromRightPx = other.left - left;
       final ratio = 1 - (fromRightPx / tileSize).clamp(0, 1);
-      return (bottom - rightTop!) - (delta * ratio);
+      final result = bottom - (rightTopOffset! + (delta * ratio));
+      return result;
     }
 
     return top;
   }
 
+  /// The bottommost point on this that current is within the
+  /// horizontal bounds of [other].
+  @override
+  double relativeBottom(PhysicalEntity other) {
+    if (isPitchFromLeft) {
+      final delta = leftBottomOffset! - rightBottomOffset!;
+      final fromLeftPx = other.left - left;
+      final ratio = 1 - (fromLeftPx / tileSize).clamp(0, 1);
+      final result = top + (rightBottomOffset! + (delta * ratio));
+      return result;
+    } else if (isPitchFromRight) {
+      final delta = rightBottomOffset! - leftBottomOffset!;
+      final fromRightPx = right - other.right;
+      final ratio = 1 - (fromRightPx / tileSize).clamp(0, 1);
+      final result = top + (leftBottomOffset! + (delta * ratio));
+      return result;
+    }
+
+    return bottom;
+  }
+
   /// Builds the tile grid full of ground tiles based on [groundLayer].
   static List<List<LeapMapGroundTile?>> generate(
-    TiledMap tileMap,
-    TileLayer groundLayer, {
+    LeapMap leapMap,
+    TileLayer groundLayer,
+    LeapGame game,
+    Map<String, GroundTileHandler> groundTileHandlers, {
     TiledOptions tiledOptions = const TiledOptions(),
   }) {
     final groundTiles = List.generate(
@@ -254,6 +329,7 @@ class LeapMapGroundTile extends PhysicalEntity {
       (_) => List<LeapMapGroundTile?>.filled(groundLayer.height, null),
     );
 
+    final tileMap = leapMap.tiledMap.tileMap.map;
     for (var x = 0; x < groundLayer.width; x++) {
       for (var y = 0; y < groundLayer.height; y++) {
         final gid = groundLayer.tileData![y][x].tile;
@@ -261,12 +337,18 @@ class LeapMapGroundTile extends PhysicalEntity {
           continue;
         }
         final tile = tileMap.tileByGid(gid)!;
-        groundTiles[x][y] = LeapMapGroundTile(
+        var groundTile = LeapMapGroundTile(
           tile,
           x,
           y,
+          game,
           tiledOptions: tiledOptions,
         );
+        final handler = groundTileHandlers[tile.class_];
+        if (handler != null) {
+          groundTile = handler.handleGroundTile(groundTile, leapMap);
+        }
+        groundTiles[x][y] = groundTile;
       }
     }
     return groundTiles;

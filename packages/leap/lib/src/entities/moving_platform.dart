@@ -1,42 +1,49 @@
 import 'dart:developer' as developer;
 
 import 'package:flame/extensions.dart';
+import 'package:flutter/foundation.dart';
 import 'package:leap/leap.dart';
 import 'package:tiled/tiled.dart';
 
-abstract class MovingPlatform<T extends LeapGame> extends PhysicalEntity<T> {
+/// A base class for moving platforms, which behave the same as
+/// groun tiles but move around, typically on a set path.
+abstract class MovingPlatform extends PhysicalEntity {
   MovingPlatform({
     required Vector2 initialPosition,
-    required double tileSize,
-    required this.tilePath,
     required this.moveSpeed,
+    required this.tilePath,
     this.loopMode = MovingPlatformLoopMode.reverseAndLoop,
+    this.tiledObject,
+    super.size,
     // moving platforms should update before other entities so anything
     // standing on top of it from the previous frame can be properly moved
     // with the platform.
-    super.priority = 1,
-  }) : super(static: true, collisionType: CollisionType.standard) {
-    tags.add('ground');
+    super.priority = 2,
+  }) {
+    // Behaviors
+    add(_ApplySpeedBehavior());
+    add(ApplyVelocityBehavior());
+    add(_PreventOvershotPositionBehavior());
+    add(_MoveEntitiesAtopBehavior());
+
+    tags.add(CommonTags.ground);
 
     position = initialPosition;
-
-    // Snap to the closes position on the tile grid
-    position.x = position.x - position.x % tileSize;
-    position.y = position.y - position.y % tileSize;
-
-    this.positionPath = _calculatePositionPath(position, tilePath, tileSize);
   }
 
   MovingPlatform.fromTiledObject(
     TiledObject tiledObject,
-    double tileSize,
   ) : this(
           initialPosition: Vector2(tiledObject.x, tiledObject.y),
+          size: Vector2(tiledObject.width, tiledObject.height),
           moveSpeed: _parseMoveSpeed(tiledObject),
           tilePath: _parseTilePath(tiledObject),
           loopMode: _parseLoopMode(tiledObject),
-          tileSize: tileSize,
+          tiledObject: tiledObject,
         );
+
+  /// [TiledObject] this was built from
+  final TiledObject? tiledObject;
 
   /// Move speed in tiles per second
   final Vector2 moveSpeed;
@@ -51,7 +58,11 @@ abstract class MovingPlatform<T extends LeapGame> extends PhysicalEntity<T> {
   /// node when the platform is created.
   final List<(int, int)> tilePath;
 
+  /// The [tilePath] in world space, with the initial position added
+  /// at the front (index 0).
   late final List<Vector2> positionPath;
+
+  Vector2 get nextPosition => positionPath[_nextPathNode];
 
   /// What to do when reaching the end of the tilePath.
   final MovingPlatformLoopMode loopMode;
@@ -61,74 +72,10 @@ abstract class MovingPlatform<T extends LeapGame> extends PhysicalEntity<T> {
   bool _stopped = false;
 
   @override
-  void update(double dt) {
-    super.update(dt);
-
-    if (!_stopped) {
-      final prevX = x;
-      final prevY = y;
-
-      updatePositionAndLoop(dt);
-
-      final deltaX = x - prevX;
-      final deltaY = y - prevY;
-      // Update the position of anything on top of this platform. Ideally
-      // this happens before the other entity's collision logic
-      world.physicals
-          .where((other) => other.collisionInfo.downCollision == this)
-          .forEach((element) {
-        element.x += deltaX;
-        element.y += deltaY;
-      });
-    }
-  }
-
-  void updatePositionAndLoop(double dt) {
-    if (position == positionPath[_nextPathNode]) {
-      if (_reversing) {
-        _nextPathNode -= 1;
-      } else {
-        _nextPathNode += 1;
-      }
-
-      if (_nextPathNode < 0) {
-        _reversing = false;
-        _nextPathNode = 1;
-      }
-      if (_nextPathNode >= positionPath.length) {
-        switch (loopMode) {
-          case MovingPlatformLoopMode.none:
-            _stopped = true;
-          case MovingPlatformLoopMode.resetAndLoop:
-            position.x = positionPath[0].x;
-            position.y = positionPath[0].y;
-            _nextPathNode = 1;
-          case MovingPlatformLoopMode.reverseAndLoop:
-            _reversing = true;
-            _nextPathNode = positionPath.length - 2;
-        }
-      }
-    }
-
-    final nextPosition = positionPath[_nextPathNode];
-
-    final lastX = position.x;
-    if (nextPosition.x > x) {
-      position.x += dt * moveSpeed.x * tileSize;
-      position.x = position.x.clamp(lastX, nextPosition.x);
-    } else {
-      position.x -= dt * moveSpeed.x * tileSize;
-      position.x = position.x.clamp(nextPosition.x, lastX);
-    }
-
-    final lastY = position.y;
-    if (nextPosition.y > y) {
-      position.y += dt * moveSpeed.y * tileSize;
-      position.y = position.y.clamp(lastY, nextPosition.y);
-    } else {
-      position.y -= dt * moveSpeed.y * tileSize;
-      position.y = position.y.clamp(nextPosition.y, lastY);
-    }
+  @mustCallSuper
+  void onLoad() {
+    super.onLoad();
+    positionPath = _calculatePositionPath(position, tilePath, tileSize);
   }
 
   static Vector2 _parseMoveSpeed(TiledObject tiledObject) {
@@ -196,8 +143,103 @@ abstract class MovingPlatform<T extends LeapGame> extends PhysicalEntity<T> {
   }
 }
 
+/// Options for MovingPlatformBehavior when it reaches the extends
+/// of its path.
 enum MovingPlatformLoopMode {
+  /// Stop at the end of the path.
   none,
+
+  /// Jump back to the initial position and start the path again.
   resetAndLoop,
+
+  /// Traverse the path in reverse to the initial position, and then
+  /// start the path again.
   reverseAndLoop,
+}
+
+class _ApplySpeedBehavior extends PhysicalBehavior<MovingPlatform> {
+  @override
+  void update(double dt) {
+    if (parent._stopped) {
+      return;
+    }
+
+    if (position == parent.positionPath[parent._nextPathNode]) {
+      if (parent._reversing) {
+        parent._nextPathNode -= 1;
+      } else {
+        parent._nextPathNode += 1;
+      }
+
+      if (parent._nextPathNode < 0) {
+        parent._reversing = false;
+        parent._nextPathNode = 1;
+      }
+      if (parent._nextPathNode >= parent.positionPath.length) {
+        switch (parent.loopMode) {
+          case MovingPlatformLoopMode.none:
+            parent._stopped = true;
+          case MovingPlatformLoopMode.resetAndLoop:
+            position.x = parent.positionPath[0].x;
+            position.y = parent.positionPath[0].y;
+            parent._nextPathNode = 1;
+          case MovingPlatformLoopMode.reverseAndLoop:
+            parent._reversing = true;
+            parent._nextPathNode = parent.positionPath.length - 2;
+        }
+      }
+    }
+
+    if (parent.nextPosition.x > parent.x) {
+      velocity.x = parent.moveSpeed.x * parent.tileSize;
+    } else {
+      velocity.x = -parent.moveSpeed.x * parent.tileSize;
+    }
+
+    if (parent.nextPosition.y > parent.y) {
+      velocity.y = parent.moveSpeed.y * parent.tileSize;
+    } else {
+      velocity.y = -parent.moveSpeed.y * parent.tileSize;
+    }
+  }
+}
+
+class _MoveEntitiesAtopBehavior extends PhysicalBehavior<MovingPlatform> {
+  @override
+  void update(double dt) {
+    if (!parent._stopped) {
+      final deltaX = x - prevPosition.x;
+      final deltaY = y - prevPosition.y;
+      // Update the position of anything on top of this platform. Ideally
+      // this happens before the other entity's collision logic
+      leapWorld.physicals
+          .where((other) => other.collisionInfo.downCollision == parent)
+          .forEach((element) {
+        element.x += deltaX;
+        element.y += deltaY;
+      });
+    }
+  }
+}
+
+class _PreventOvershotPositionBehavior
+    extends PhysicalBehavior<MovingPlatform> {
+  @override
+  void update(double dt) {
+    if (parent.nextPosition.x > parent.prevPosition.x) {
+      position.x =
+          position.x.clamp(parent.prevPosition.x, parent.nextPosition.x);
+    } else {
+      position.x =
+          position.x.clamp(parent.nextPosition.x, parent.prevPosition.x);
+    }
+
+    if (parent.nextPosition.y > parent.prevPosition.y) {
+      position.y =
+          position.y.clamp(parent.prevPosition.y, parent.nextPosition.y);
+    } else {
+      position.y =
+          position.y.clamp(parent.nextPosition.y, parent.prevPosition.y);
+    }
+  }
 }
